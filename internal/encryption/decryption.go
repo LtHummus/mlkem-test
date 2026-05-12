@@ -11,9 +11,11 @@ import (
 	"mlkem-test/internal/format"
 )
 
-func decryptChunks(r io.Reader, w io.Writer, key []byte) error {
+func decryptChunks(r io.Reader, w io.Writer, key []byte, plaintextBytes uint64, chunkSize uint64) error {
 	buf := make([]byte, DefaultChunkSize+chacha20poly1305.Overhead)
-	var chunkNum uint64 = 0
+	var chunkNum uint64
+
+	numChunks := (plaintextBytes + chunkSize - 1) / chunkSize
 
 	enc, err := chacha20poly1305.NewX(key)
 	if err != nil {
@@ -26,7 +28,7 @@ func decryptChunks(r io.Reader, w io.Writer, key []byte) error {
 		if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
 			return err
 		}
-		lastChunk := errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)
+		lastChunk := numChunks == chunkNum
 		data := buf[:n]
 
 		nonce := make([]byte, chacha20poly1305.NonceSizeX)
@@ -62,7 +64,7 @@ func Decrypt(dkBytes []byte, r io.Reader, w io.Writer) error {
 		return err
 	}
 
-	encryptedSecret, salt, err := format.Read(r)
+	encryptedSecret, salt, plainextSize, chunkSize, err := format.Read(r)
 	if err != nil {
 		return err
 	}
@@ -77,7 +79,7 @@ func Decrypt(dkBytes []byte, r io.Reader, w io.Writer) error {
 		return err
 	}
 
-	err = decryptChunks(r, w, key)
+	err = decryptChunks(r, w, key, plainextSize, chunkSize)
 	if err != nil {
 		return err
 	}

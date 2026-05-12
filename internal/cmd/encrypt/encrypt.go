@@ -18,13 +18,18 @@ func Encrypt(ctx context.Context, cmd *cli.Command) error {
 
 	filename := cmd.Arguments[0].Get().(string)
 
+	fs, err := os.Stat(filename)
+	if err != nil {
+		return err
+	}
+
 	f, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	err = encryption.Encrypt(keyBytes, f, os.Stdout)
+	err = encryption.Encrypt(keyBytes, uint64(fs.Size()), f, os.Stdout)
 	if err != nil {
 		return err
 	}

@@ -13,9 +13,10 @@ import (
 	"mlkem-test/internal/format"
 )
 
-func encryptChunks(r io.Reader, w io.Writer, chunkSize int, key []byte) error {
+func encryptChunks(r io.Reader, w io.Writer, chunkSize int, plaintextLength uint64, key []byte) error {
 	buf := make([]byte, chunkSize)
-	var chunkNum uint64 = 0
+	var chunkNum uint64
+	var bytesEncrypted uint64
 
 	enc, err := chacha20poly1305.NewX(key)
 	if err != nil {
@@ -30,7 +31,8 @@ func encryptChunks(r io.Reader, w io.Writer, chunkSize int, key []byte) error {
 		if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
 			return err
 		}
-		lastChunk := errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)
+		bytesEncrypted += uint64(n)
+		lastChunk := bytesEncrypted >= plaintextLength
 		data := buf[:n]
 
 		nonce := make([]byte, chacha20poly1305.NonceSizeX)
@@ -57,7 +59,7 @@ func encryptChunks(r io.Reader, w io.Writer, chunkSize int, key []byte) error {
 	return nil
 }
 
-func Encrypt(ekBytes []byte, fileToEncrypt io.Reader, encryptFile io.Writer) error {
+func Encrypt(ekBytes []byte, plaintextLength uint64, fileToEncrypt io.Reader, encryptFile io.Writer) error {
 	ek, err := mlkem.NewEncapsulationKey768(ekBytes)
 	if err != nil {
 		return err
@@ -76,12 +78,12 @@ func Encrypt(ekBytes []byte, fileToEncrypt io.Reader, encryptFile io.Writer) err
 		return err
 	}
 
-	err = format.Write(encryptFile, encryptedSecret, salt)
+	err = format.Write(encryptFile, encryptedSecret, salt, plaintextLength, DefaultChunkSize)
 	if err != nil {
 		return err
 	}
 
-	err = encryptChunks(fileToEncrypt, encryptFile, DefaultChunkSize, chachaKey)
+	err = encryptChunks(fileToEncrypt, encryptFile, DefaultChunkSize, plaintextLength, chachaKey)
 	if err != nil {
 		return err
 	}

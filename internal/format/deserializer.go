@@ -7,42 +7,42 @@ import (
 	"slices"
 )
 
-func Read(r io.Reader) ([]byte, []byte, error) {
+func Read(r io.Reader) ([]byte, []byte, uint64, uint64, error) {
 	magicByte := make([]byte, len(MagicNumber))
 	_, err := io.ReadFull(r, magicByte)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, 0, err
 	}
 
 	if !slices.Equal(magicByte, MagicNumber) {
-		return nil, nil, fmt.Errorf("invalid magic number")
+		return nil, nil, 0, 0, fmt.Errorf("invalid magic number")
 	}
 
 	var h header
 	err = binary.Read(r, binary.BigEndian, &h)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, 0, err
 	}
 
 	if h.EncapsulatedKeyLength > 16*1024 {
-		return nil, nil, fmt.Errorf("invalid encapsulated key length")
+		return nil, nil, 0, 0, fmt.Errorf("invalid encapsulated key length")
 	}
 
 	encryptedSecret := make([]byte, h.EncapsulatedKeyLength)
 	_, err = io.ReadFull(r, encryptedSecret)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, 0, err
 	}
 
 	if h.SaltSize > 16*1024 {
-		return nil, nil, fmt.Errorf("invalid salt length")
+		return nil, nil, 0, 0, fmt.Errorf("invalid salt length")
 	}
 
 	salt := make([]byte, h.SaltSize)
 	_, err = io.ReadFull(r, salt)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, 0, err
 	}
 
-	return encryptedSecret, salt, nil
+	return encryptedSecret, salt, h.DecryptedLength, h.ChunkSize, nil
 }

@@ -12,7 +12,7 @@ THIS IS A TOY EXAMPLE. IT HAS NOT BEEN CHECKED BY ANYONE OR ANYTHING. DO NOT USE
 
 ### Notes for future me
 
-- We use KHDF for key derivation (w/ SHA256)
+- We use HKDF for key derivation (w/ SHA256)
 - Nonces contain chunk numbers (safe since keys are generated per file and will not be reused)
 - AAD contains chunk number with a sentinel byte indicating if it is the last chunk or not (to detect truncated input)
 
@@ -20,6 +20,8 @@ THIS IS A TOY EXAMPLE. IT HAS NOT BEEN CHECKED BY ANYONE OR ANYTHING. DO NOT USE
 
 - `MLKEMTEST` magic number
 - 1-byte Version (currently 1)
+- 8-byte plaintext length
+- 8-byte chunk size
 - 8-byte Encapsulated key length
 - 8-byte salt length
 - Encapsulated key

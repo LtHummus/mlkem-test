@@ -5,11 +5,13 @@ import (
 	"io"
 )
 
-func Write(w io.Writer, encryptedSecret []byte, salt []byte) error {
+func Write(w io.Writer, encryptedSecret []byte, salt []byte, decryptedLength uint64, chunkSize uint64) error {
 	h := header{
 		FormatID:              ID,
 		EncapsulatedKeyLength: uint64(len(encryptedSecret)),
 		SaltSize:              uint64(len(salt)),
+		DecryptedLength:       decryptedLength,
+		ChunkSize:             chunkSize,
 	}
 
 	_, err := w.Write(MagicNumber)
