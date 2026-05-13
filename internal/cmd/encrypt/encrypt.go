@@ -10,16 +10,19 @@ import (
 	"mlkem-test/internal/encryption"
 )
 
+var (
+	InputFile string
+	KeyFile   string
+)
+
 func Encrypt(ctx context.Context, cmd *cli.Command) error {
 	// read ek
-	keyBytes, err := os.ReadFile("mlkem768.ek")
+	keyBytes, err := os.ReadFile(KeyFile)
 	if err != nil {
 		return err
 	}
 
-	filename := cmd.Arguments[0].Get().(string)
-
-	fs, err := os.Stat(filename)
+	fs, err := os.Stat(InputFile)
 	if err != nil {
 		return err
 	}
@@ -28,7 +31,7 @@ func Encrypt(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("input file is empty")
 	}
 
-	f, err := os.Open(filename)
+	f, err := os.Open(InputFile)
 	if err != nil {
 		return err
 	}

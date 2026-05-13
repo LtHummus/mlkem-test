@@ -9,14 +9,18 @@ import (
 	"mlkem-test/internal/encryption"
 )
 
+var (
+	InputFile string
+	KeyFile   string
+)
+
 func Decrypt(ctx context.Context, cmd *cli.Command) error {
-	dkBytes, err := os.ReadFile("mlkem768.dk")
+	dkBytes, err := os.ReadFile(KeyFile)
 	if err != nil {
 		return err
 	}
 
-	filename := cmd.Arguments[0].Get().(string)
-	f, err := os.Open(filename)
+	f, err := os.Open(InputFile)
 	if err != nil {
 		return err
 	}
