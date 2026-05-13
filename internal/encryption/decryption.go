@@ -4,6 +4,7 @@ import (
 	"crypto/mlkem"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/chacha20poly1305"
@@ -12,8 +13,9 @@ import (
 )
 
 func decryptChunks(r io.Reader, w io.Writer, key []byte, plaintextBytes uint64, chunkSize uint64) error {
-	buf := make([]byte, DefaultChunkSize+chacha20poly1305.Overhead)
+	buf := make([]byte, chunkSize+chacha20poly1305.Overhead)
 	var chunkNum uint64
+	var bytesRead uint64
 
 	numChunks := (plaintextBytes + chunkSize - 1) / chunkSize
 
@@ -44,6 +46,7 @@ func decryptChunks(r io.Reader, w io.Writer, key []byte, plaintextBytes uint64, 
 		if err != nil {
 			return err
 		}
+		bytesRead += uint64(n - chacha20poly1305.Overhead)
 
 		_, err = w.Write(plaintext)
 		if err != nil {
@@ -53,6 +56,10 @@ func decryptChunks(r io.Reader, w io.Writer, key []byte, plaintextBytes uint64, 
 		if lastChunk {
 			break
 		}
+	}
+
+	if bytesRead != plaintextBytes {
+		return fmt.Errorf("did not read correct number of bytes (expected %d, got %d)", plaintextBytes, bytesRead)
 	}
 
 	return nil

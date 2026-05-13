@@ -44,5 +44,13 @@ func Read(r io.Reader) ([]byte, []byte, uint64, uint64, error) {
 		return nil, nil, 0, 0, err
 	}
 
+	if h.ChunkSize > 1*1024*1024 {
+		return nil, nil, 0, 0, fmt.Errorf("invalid chunk size")
+	}
+
+	if h.ChunkSize < 1 {
+		return nil, nil, 0, 0, fmt.Errorf("invalid chunk size")
+	}
+
 	return encryptedSecret, salt, h.DecryptedLength, h.ChunkSize, nil
 }
