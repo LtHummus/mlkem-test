@@ -2,6 +2,7 @@ package encrypt
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/urfave/cli/v3"
@@ -21,6 +22,10 @@ func Encrypt(ctx context.Context, cmd *cli.Command) error {
 	fs, err := os.Stat(filename)
 	if err != nil {
 		return err
+	}
+
+	if fs.Size() == 0 {
+		return fmt.Errorf("input file is empty")
 	}
 
 	f, err := os.Open(filename)

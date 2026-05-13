@@ -76,6 +76,10 @@ func Decrypt(dkBytes []byte, r io.Reader, w io.Writer) error {
 		return err
 	}
 
+	if plainextSize == 0 {
+		return fmt.Errorf("header says file has 0 bytes")
+	}
+
 	sharedSecret, err := dk.Decapsulate(encryptedSecret)
 	if err != nil {
 		return err
